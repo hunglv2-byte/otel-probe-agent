@@ -48,6 +48,9 @@ public class Main {
                     .ignore(ElementMatchers.nameStartsWith("io.opentelemetry."))
                     .ignore(ElementMatchers.nameStartsWith("org.example.OtelAdvice"))
                     .ignore(ElementMatchers.nameStartsWith("org.slf4j.")) // prevent logging loops
+                    .ignore(ElementMatchers.nameStartsWith("jp.joinsure.core.domain")) // <— skip core.domain
+                    .ignore(ElementMatchers.nameStartsWith("jp.joinsure.core.port.adapter.config"))
+                    .ignore(ElementMatchers.nameStartsWith("jp.joinsure.core.infra"))
                     .ignore(ElementMatchers.isSynthetic()) //Skip all synthetic / lambda classes
                     .type(multiplePackage()) // scan packages or classes
                     .transform(new AgentBuilder.Transformer() {
