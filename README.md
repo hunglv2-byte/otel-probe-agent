@@ -1,0 +1,1 @@
+Do not run OpenTelemetry’s javaagent at the same time yet — confirm this bare-bones agent works first.
