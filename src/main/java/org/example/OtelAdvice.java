@@ -9,7 +9,7 @@ import net.bytebuddy.asm.Advice;
 public class OtelAdvice {
 
     public static final Tracer tracer =
-            GlobalOpenTelemetry.getTracer("org.example.auto");
+            GlobalOpenTelemetry.getTracer("otel.probe.agent");
 
     @Advice.OnMethodEnter
     static Span onEnter(@Advice.Origin("#t.#m") String methodName

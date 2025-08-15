@@ -67,6 +67,7 @@ public class Main {
                                             .and(ElementMatchers.not(ElementMatchers.nameMatches("^(invoke|invokeSuspend|emit)$")))
                                             .and(ElementMatchers.not(ElementMatchers.nameContains("$$"))) // skips many coroutine internals
                                             .and(ElementMatchers.not(ElementMatchers.isSynthetic()))
+                                            .and(ElementMatchers.not(ElementMatchers.isDeclaredBy(ElementMatchers.isEnum())))
                                     ));
                         }
 
