@@ -39,18 +39,30 @@ public class Main {
         return matcher;
     }
 
+    private static AgentBuilder applyIgnorePackages(AgentBuilder agentBuilder) {
+        String ignoreProp = System.getProperty("otel.probe.packages.ignore");
+        if (ignoreProp != null && !ignoreProp.isEmpty()) {
+            String[] packages = ignoreProp.split(",");
+            for (String pkg : packages) {
+                String trimmed = pkg.trim();
+                if (!trimmed.isEmpty()) {
+                    System.out.println("[OtelAgent] Ignoring: " + trimmed);
+                    agentBuilder = agentBuilder.ignore(ElementMatchers.nameStartsWith(trimmed));
+                }
+            }
+        }
+        return agentBuilder;
+    }
+
+
     public static void premain(String agentArgs, Instrumentation inst) {
         try {
             System.out.println("[OtelAgent] Starting instrumentation...");
+            AgentBuilder agentBuilder = new AgentBuilder.Default();
 
-            new AgentBuilder.Default()
-                    .ignore(ElementMatchers.nameStartsWith("net.bytebuddy."))
-                    .ignore(ElementMatchers.nameStartsWith("io.opentelemetry."))
-                    .ignore(ElementMatchers.nameStartsWith("org.example.OtelAdvice"))
-                    .ignore(ElementMatchers.nameStartsWith("org.slf4j.")) // prevent logging loops
-                    .ignore(ElementMatchers.nameStartsWith("jp.joinsure.core.domain")) // <— skip core.domain
-                    .ignore(ElementMatchers.nameStartsWith("jp.joinsure.core.port.adapter.config"))
-                    .ignore(ElementMatchers.nameStartsWith("jp.joinsure.core.infra"))
+            agentBuilder = applyIgnorePackages(agentBuilder); // <-- 🔑 clean now
+
+            agentBuilder
                     .ignore(ElementMatchers.isSynthetic()) //Skip all synthetic / lambda classes
                     .type(multiplePackage()) // scan packages or classes
                     .transform(new AgentBuilder.Transformer() {
