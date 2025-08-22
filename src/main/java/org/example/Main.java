@@ -16,55 +16,47 @@ import java.security.ProtectionDomain;
 // click the <icon src="AllIcons.Actions.Execute"/> icon in the gutter.
 public class Main {
 
-    static ElementMatcher.Junction<TypeDescription> multiplePackage(){
-        String[] packages = System.getProperty("otel.probe.agent.packages", "all").split(",");
+    private static ElementMatcher.Junction<? super TypeDescription> buildTypeMatcher() {
+        // 1. Include matcher
+        String includeProp = System.getProperty("otel.probe.agent.packages");
+        ElementMatcher.Junction<? super TypeDescription> includeMatcher = ElementMatchers.none();
 
-        ElementMatcher.Junction<TypeDescription> matcher;
-
-        if (packages.length == 1 && packages[0].trim().equalsIgnoreCase("all")) {
-            // No filtering — instrument everything
-            matcher = ElementMatchers.any();
-            System.out.println("[OtelAgent] Instrumenting ALL classes");
-        } else {
-            matcher = ElementMatchers.none();
-            for (String pkg : packages) {
-                pkg = pkg.trim();
-                if (!pkg.isEmpty()) {
-                    matcher = matcher.or(ElementMatchers.nameStartsWith(pkg));
+        if (includeProp != null && !includeProp.isEmpty()) {
+            for (String pkg : includeProp.split(",")) {
+                String trimmed = pkg.trim();
+                if (!trimmed.isEmpty()) {
+                    System.out.println("[OtelAgent] Including: " + trimmed);
+                    includeMatcher = includeMatcher.or(ElementMatchers.nameStartsWith(trimmed));
                 }
             }
-            System.out.println("[OtelAgent] Instrumenting package prefixes: " + String.join(", ", packages));
         }
 
-        return matcher;
-    }
-
-    private static AgentBuilder applyIgnorePackages(AgentBuilder agentBuilder) {
+        // 2. Exclude matcher (sub-packages inside include)
         String ignoreProp = System.getProperty("otel.probe.packages.ignore");
+        ElementMatcher.Junction<? super TypeDescription> excludeMatcher = ElementMatchers.none();
+
         if (ignoreProp != null && !ignoreProp.isEmpty()) {
-            String[] packages = ignoreProp.split(",");
-            for (String pkg : packages) {
+            for (String pkg : ignoreProp.split(",")) {
                 String trimmed = pkg.trim();
                 if (!trimmed.isEmpty()) {
                     System.out.println("[OtelAgent] Ignoring: " + trimmed);
-                    agentBuilder = agentBuilder.ignore(ElementMatchers.nameStartsWith(trimmed));
+                    excludeMatcher = excludeMatcher.or(ElementMatchers.nameStartsWith(trimmed));
                 }
             }
         }
-        return agentBuilder;
-    }
 
+        // 3. Final matcher: include minus exclude
+        return includeMatcher.and(ElementMatchers.not(excludeMatcher));
+    }
 
     public static void premain(String agentArgs, Instrumentation inst) {
         try {
             System.out.println("[OtelAgent] Starting instrumentation...");
             AgentBuilder agentBuilder = new AgentBuilder.Default();
 
-            agentBuilder = applyIgnorePackages(agentBuilder); // <-- 🔑 clean now
-
             agentBuilder
                     .ignore(ElementMatchers.isSynthetic()) //Skip all synthetic / lambda classes
-                    .type(multiplePackage()) // scan packages or classes
+                    .type(buildTypeMatcher()) // scan packages or classes
                     .transform(new AgentBuilder.Transformer() {
                         @Override
                         public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder,
