@@ -32,7 +32,7 @@ public class Main {
         }
 
         // 2. Exclude matcher (sub-packages inside include)
-        String ignoreProp = System.getProperty("otel.probe.packages.ignore");
+        String ignoreProp = System.getProperty("otel.probe.agent.packages.ignore");
         ElementMatcher.Junction<? super TypeDescription> excludeMatcher = ElementMatchers.none();
 
         if (ignoreProp != null && !ignoreProp.isEmpty()) {
