@@ -18,7 +18,7 @@ public class Main {
 
     private static ElementMatcher.Junction<? super TypeDescription> buildTypeMatcher() {
         // 1. Include matcher
-        String includeProp = System.getProperty("otel.probe.agent.packages");
+        String includeProp = System.getProperty("otel.probe.agent.packages.include");
         ElementMatcher.Junction<? super TypeDescription> includeMatcher = ElementMatchers.none();
 
         if (includeProp != null && !includeProp.isEmpty()) {
@@ -32,7 +32,7 @@ public class Main {
         }
 
         // 2. Exclude matcher (sub-packages inside include)
-        String ignoreProp = System.getProperty("otel.probe.agent.packages.ignore");
+        String ignoreProp = System.getProperty("otel.probe.agent.packages.exclude");
         ElementMatcher.Junction<? super TypeDescription> excludeMatcher = ElementMatchers.none();
 
         if (ignoreProp != null && !ignoreProp.isEmpty()) {
